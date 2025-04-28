@@ -23,7 +23,19 @@ export default function Home() {
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
     const fetchCatData = async (): Promise<Cat[]> => {
-        const res = await ky.get(`http://localhost:3000/api/getCat`);
+        const res = await ky.get(
+            'https://api.thecatapi.com/v1/images/search?limit=1',
+            {
+                method: 'GET',
+                headers: {
+                    Accept: 'text/plain',
+                    'Content-Type': 'application/json',
+                    'x-api-key':
+                        'live_UQzJaFWOclKjoa4a2j6QU6MQNr6SB9c3xbqNjMCYEtIO02SdgN8UU2apYN8jO3WJ',
+                },
+                redirect: 'follow',
+            }
+        );
         return (await res.json()) as Cat[];
     };
     const handleButttonClick = async () => {
