@@ -1,95 +1,108 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import Image from 'next/image';
+import styles from './page.module.css';
+import Checkbox from '@mui/material/Checkbox';
+import { grey } from '@mui/material/colors';
+import { useEffect, useState } from 'react';
+import { Button, FormControlLabel } from '@mui/material';
+import ky from 'ky';
+import { useQuery } from 'react-query';
+
+interface Cat {
+    breeds: [];
+    height: number;
+    id: string;
+    url: string;
+    width: number;
+}
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [isAutorefresh, setIsAutorefresh] = useState(false);
+    const [img, setImg] = useState('https://cdn2.thecatapi.com/images/e0f.jpg');
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+
+    const fetchCatData = async (): Promise<Cat[]> => {
+        const res = await ky.get(`http://localhost:3000/api/getCat`);
+        return (await res.json()) as Cat[];
+    };
+    const handleButttonClick = async () => {
+        const data = await fetchCatData();
+        setImg(data[0].url);
+    };
+
+    const { refetch } = useQuery({
+        queryKey: ['data'],
+        queryFn: handleButttonClick,
+    });
+
+    useEffect(() => {
+        if (isAutorefresh) {
+            const interval = setInterval(() => {
+                refetch();
+            }, 5000);
+
+            return () => clearInterval(interval);
+        }
+    }, [isAutorefresh]);
+
+    return (
+        <div className={styles.page}>
+            <main className={styles.main}>
+                <div className={styles.block}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                {...label}
+                                checked={!isAutorefresh}
+                                onChange={() => setIsAutorefresh(false)}
+                                sx={{
+                                    color: grey[800],
+                                    '&.Mui-checked': {
+                                        color: grey[600],
+                                    },
+                                }}
+                            />
+                        }
+                        label="Enabled"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                {...label}
+                                checked={isAutorefresh}
+                                onChange={() => setIsAutorefresh(true)}
+                                sx={{
+                                    color: grey[800],
+                                    '&.Mui-checked': {
+                                        color: grey[600],
+                                    },
+                                }}
+                            />
+                        }
+                        label="Autorefresh every 5 seconds"
+                    />
+                    <div className={styles.image}>
+                        <Image src={img} alt="Кошка" width={100} height={100} />
+                    </div>
+                    <Button
+                        variant="contained"
+                        disabled={isAutorefresh}
+                        onClick={handleButttonClick}
+                    >
+                        Get Cat
+                    </Button>
+                </div>
+            </main>
+            <footer className={styles.footer}>
+                <div>
+                    <p>Тестовое задание</p>
+                    <p>Воскресенская Мария</p>
+                    <p>email: vmm459@gmail.com</p>
+                    <p>телеграмм: @vmm459</p>
+                    <p>телефон: 89127889459</p>
+                </div>
+            </footer>
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
